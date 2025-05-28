@@ -7,7 +7,7 @@ await initialize(wasm);
 
 
 const generateAscii = async content => {
-  const qr = new QRCode({ content: content || 'https://vnl.pages.dev/' })
+  const qr = new QRCode({ content: content || 'https://vnl.pages.dev/' });
   var modules = qr.qrcode.modules;
 
   var ascii = '';
@@ -19,13 +19,34 @@ const generateAscii = async content => {
     }
     ascii += '\r\n';
   }
-  return new Response(ascii, { headers: { 'Content-Type': 'text/plain' } })
+  return new Response(ascii, { headers: { 'Content-Type': 'text/plain' } });
+}
+
+const base64Encode = (str) => {
+  const charCodes = new TextEncoder().encode(str);
+  return btoa(String.fromCharCode(...charCodes));
+};
+
+const base64Decode = (str) => {
+  const utf8Array = Uint8Array.from(
+    Array.from(atob(str)).map((s) => s.charCodeAt(0)),
+  );
+  return new TextDecoder().decode(utf8Array);
+};
+
+const generateDataUrl = async content => {
+  const qr = new QRCode({ content: content || 'https://vnl.pages.dev/' });
+  const svg = qr.svg();
+  const svgBase64 = btoa(svg); // base64Encode(svg);
+  const dataUrl = `data:image/svg+xml;base64,${svgBase64}`;
+
+  return new Response(dataUrl, { headers: { 'Content-Type': 'text/plain' } });
 }
 
 const generatePng = async content => {
   // SVG
-  const svg = new QRCode({ content: content || 'https://vnl.pages.dev/' }).svg()
-  // return new Response(svg, { headers: { 'Content-Type': 'image/svg+xml' } })
+  const svg = new QRCode({ content: content || 'https://vnl.pages.dev/' }).svg();
+  // return new Response(svg, { headers: { 'Content-Type': 'image/svg+xml' } });
 
   // SVG to PNG
   const png = await svg2png(
@@ -35,12 +56,12 @@ const generatePng = async content => {
     });
 
   // Return
-  return new Response(png, { headers: { 'Content-Type': 'image/png' } })
+  return new Response(png, { headers: { 'Content-Type': 'image/png' } });
 }
 
 const generateSvg = async content => {
-  const qr = new QRCode({ content: content || 'https://vnl.pages.dev/' })
-  return new Response(qr.svg(), { headers: { 'Content-Type': 'image/svg+xml' } })
+  const qr = new QRCode({ content: content || 'https://vnl.pages.dev/' });
+  return new Response(qr.svg(), { headers: { 'Content-Type': 'image/svg+xml' } });
 }
 
 const landing = `
@@ -64,7 +85,7 @@ const landing = `
     })
   }
 </script>
-`
+`;
 
 export default {
   fetch: async (request, env) => {
@@ -79,10 +100,10 @@ export default {
     let response
     if (method === 'POST') {
       try {
-        const json = await request.json()
+        const json = await request.json();
         content = json.text;
       } catch (error) {
-        content = ''
+        content = '';
       }
 
       if (path == 'ascii') {
@@ -94,19 +115,21 @@ export default {
       }
     } else if (method === 'GET') {
       if (searchParams.has('text')) {
-        content = searchParams.get('text')
+        content = searchParams.get('text');
       }
 
       if (path == '') {
-        response = new Response(landing, { headers: { 'Content-Type': 'text/html' } })
+        response = new Response(landing, { headers: { 'Content-Type': 'text/html' } });
       } else if (path == 'ascii') {
         response = await generateAscii(content);
+      } else if (path == 'dataurl') {
+        response = await generateDataUrl(content);
       } else if (path == 'png') {
         response = await generatePng(content);
       } else if (path == 'svg') {
         response = await generateSvg(content);
       }
     }
-    return response
+    return response;
   }
 }
