@@ -1,0 +1,17 @@
+{
+  "name": "workers-qr-code-generator",
+  "main": "index.js",
+  "private": true,
+  "description": "QR code generator",
+  "version": "1.0.0",
+  "author": "YA",
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler publish"
+  },
+  "dependencies": {
+    "canvas": "^3.1.0",
+    "qrcode-svg": "^1.1.0",
+    "svg2png-wasm": "^1.4.1"
+  }
+}
